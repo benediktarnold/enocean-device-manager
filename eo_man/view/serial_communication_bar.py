@@ -203,7 +203,7 @@ class SerialConnectionBar():
 
         def detect_serial_ports(device_type:str):
             try:
-                self.serial_cntr.get_serial_ports(device_type, force_reload)
+                return self.serial_cntr.get_serial_ports(device_type, force_reload)
             except:
                 LOGGER.exception("Was not able to detect serial ports.")
 

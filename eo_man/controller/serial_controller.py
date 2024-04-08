@@ -8,6 +8,7 @@ from typing import Iterator
 from termcolor import colored
 import logging
 import threading
+import platform
 
 import serial.tools.list_ports
 from serial.tools.list_ports_common import ListPortInfo
@@ -105,9 +106,10 @@ class SerialController():
 
                 try:
                     # is faster to precheck with serial
-                    s = serial.Serial(port, baudrate=baud_rate, timeout=0.2)
-                    s.rs485_mode = serial.rs485.RS485Settings()
-                    s.close()
+                    if platform.system() != "Darwin":
+                        s = serial.Serial(port, baudrate=baud_rate, timeout=0.2)
+                        s.rs485_mode = serial.rs485.RS485Settings()
+                        s.close()
 
                     # test usb300
                     if baud_rate == 57600:
