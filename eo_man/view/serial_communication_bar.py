@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import *
 from tkinter import ttk
 from idlelib.tooltip import Hovertip
-import threading
+import concurrent.futures
 
 from eo_man import LOGGER
 
@@ -201,28 +201,30 @@ class SerialConnectionBar():
 
     def detect_serial_ports_command(self, force_reload:bool=False):
 
-        def detect_serial_ports():
+        def detect_serial_ports(device_type:str):
             try:
-                self.main.config(cursor="watch")    #set cursor for waiting
-                self.b_detect.config(state=DISABLED)
-                self.b_connect.config(state=DISABLED)
-                self.cb_device_type.config(state=DISABLED)
-                self.cb_serial_ports.config(state=DISABLED)
-                serial_ports = self.serial_cntr.get_serial_ports(self.cb_device_type.get(), force_reload)
-                self.b_detect.config(state=NORMAL)
-                self.cb_device_type.config(state=NORMAL)
-                self.cb_serial_ports['values'] = serial_ports
-                if len(self.cb_serial_ports['values']) > 0:
-                    self.cb_serial_ports.set(self.cb_serial_ports['values'][0])
-                    self.b_connect.config(state=NORMAL)
-                else:
-                    self.b_connect.config(state=DISABLED)
-                    self.cb_serial_ports.set('')
+                self.serial_cntr.get_serial_ports(device_type, force_reload)
             except:
-                # reset buttons
                 LOGGER.exception("Was not able to detect serial ports.")
-            else:
-                self.is_connected_handler(data={'connected': False}, skipp_serial_port_detection=True)
 
-        t = threading.Thread(target=detect_serial_ports)
-        t.start()
+        self.main.config(cursor="watch")    #set cursor for waiting
+        self.b_detect.config(state=DISABLED)
+        self.b_connect.config(state=DISABLED)
+        self.cb_device_type.config(state=DISABLED)
+        self.cb_serial_ports.config(state=DISABLED)
+        device_type = self.cb_device_type.get()
+        LOGGER.info(f"Detecting serial ports for device type {device_type}")
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(detect_serial_ports, device_type)
+            serial_ports = future.result()
+            LOGGER.info(f"Detected serial ports: {serial_ports}")
+            self.b_detect.config(state=NORMAL)
+            self.cb_device_type.config(state=NORMAL)
+            self.cb_serial_ports['values'] = serial_ports
+            if len(self.cb_serial_ports['values']) > 0:
+                self.cb_serial_ports.set(self.cb_serial_ports['values'][0])
+                self.b_connect.config(state=NORMAL)
+            else:
+                self.b_connect.config(state=DISABLED)
+                self.cb_serial_ports.set('')
+                self.is_connected_handler(data={'connected': False}, skipp_serial_port_detection=True)
