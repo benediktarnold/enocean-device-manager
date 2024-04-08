@@ -41,7 +41,7 @@ def init_logger(app_bus:AppBus, log_level:int=logging.INFO):
                                        mode='a', maxBytes=10*1024*1024, backupCount=2, encoding=None, delay=0)
     stream_handler = logging.StreamHandler()
 
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s %(message)s ',
+    logging.basicConfig(format='%(asctime)s [%(threadName)s] %(levelname)s %(name)s %(message)s ',
                         level=log_level,
                         handlers=[ file_handler, stream_handler ])
     
